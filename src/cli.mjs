@@ -39,7 +39,7 @@ Change (they edit the agents' configuration files after a backup, and take --dry
              puts back the newest backup of each file install writes (the file as it is now is backed up first)
 
 Read (they change nothing):
-  list       [--agent <a,b,...>] [--project <dir>]
+  list       [--agent <a,b,...>] [--hook <name>] [--project <dir>]
              every hook of every agent, from every file each one reads, with the problems it would trip over
   bench      <hook> [--agent <a,b,...>] [--event <e,f,...>] [--fixture <file>] [--fail-closed] [--timeout <seconds>]
              [--project <dir>]
@@ -69,13 +69,13 @@ const COMMANDS = {
   install: { options: ["agent", "all", "event", "scope", "project", "matcher", "timeout", "failClosed", "dryRun", "json"], positional: 1 },
   uninstall: { options: ["agent", "all", "event", "scope", "project", "dryRun", "json"], positional: 1 },
   restore: { options: ["agent", "all", "scope", "project", "dryRun", "json"], positional: 0 },
-  list: { options: ["agent", "all", "project", "json"], positional: 0 },
+  list: { options: ["agent", "all", "project", "json", "hook"], positional: 0 },
   bench: { options: ["agent", "all", "event", "fixture", "failClosed", "timeout", "project", "json"], positional: 1 },
   explain: { options: ["json"], positional: 2 },
 };
 
 const FLAGS = { "--json": "json", "--dry-run": "dryRun", "--all": "all", "--fail-closed": "failClosed", "-h": "help", "--help": "help", "-v": "version", "--version": "version" };
-const VALUES = { "--agent": "agent", "--event": "event", "--scope": "scope", "--project": "project", "--matcher": "matcher", "--timeout": "timeout", "--fixture": "fixture" };
+const VALUES = { "--agent": "agent", "--event": "event", "--scope": "scope", "--project": "project", "--matcher": "matcher", "--timeout": "timeout", "--fixture": "fixture", "--hook": "hook" };
 
 class UsageError extends Error {}
 
@@ -98,6 +98,10 @@ export function parseArgs(argv) {
       const key = VALUES[flag];
       const value = eq ? eq[2] : argv[++i];
       if (value === undefined || (!eq && /^--?[A-Za-z]/.test(value) && key !== "matcher")) throw new UsageError(`${flag} needs a value`);
+      if (key === "hook") {
+        if (o.given.has("hook")) throw new UsageError("--hook can only be given once");
+        if (!value || !value.trim()) throw new UsageError("--hook needs a hook name");
+      }
       o.given.add(key);
       if (key === "fixture") o.fixture.push(value); else o[key] = value;
     } else if (Object.prototype.hasOwnProperty.call(FLAGS, flag) && !eq) {
@@ -229,7 +233,7 @@ export async function main(argv, io = {}) {
     }
 
     if (o.command === "list") {
-      const res = listHooks({ env, platform, project, agents });
+      const res = listHooks({ env, platform, project, agents, hook: o.hook || undefined });
       emit(listJson(res), listText(res, env));
       return res.counts.problems > 0 ? 1 : 0;
     }
