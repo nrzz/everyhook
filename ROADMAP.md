@@ -2,7 +2,7 @@
 
 What could come next. None of it is promised; all of it is open to contributors. Comment on an issue or start a [discussion](https://github.com/nrzz/everyhook/discussions) before a large change.
 
-- `list --event <e,f,...>`: only the entries of those contract events, across the agents, through each agent's own event names. This is the open good first issue: [#5](https://github.com/nrzz/everyhook/issues/5).
+- `list --problems`: only the entries and files with a problem, the lint on its own. This is the open good first issue: [#7](https://github.com/nrzz/everyhook/issues/7).
 - A portable matcher: `install --kind shell,edit` writing each agent's own matcher for those kinds of tool (`Bash`, `run_shell_command`, `bash|powershell`, `Shell`), so that one command guards the same tools everywhere. Today `--matcher` is in the agent's own syntax, and a matcher written for one agent matches nothing in another.
 - More agents. OpenCode takes its hooks as a plugin (`tool.execute.before`) rather than a configuration entry, so the adapter would write a small plugin that calls `everyhook run`; Antigravity CLI keeps a `hooks.json` under `~/.gemini/config/`. Neither was run here; each needs its binary, a fake API for it and recorded documents before it goes in the table.
 - Cursor from the binary. Everything about Cursor is documented, not recorded, because its CLI needs a login: record its documents, check that `ask` is enforced on `beforeShellExecution` and not on `preToolUse`, and find the keys of its Write tool at `preToolUse`, which the reference does not show.

@@ -4,7 +4,10 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
-- `list --event <e,f,...>`: only the entries of those contract events (`all` for every one), across the agents, mapped through each agent's own event names; an agent-only event is left out. Files that keep no matching entry are left out, problems are counted on the entries shown, and no match is a successful empty report; `--json` adds `events`. An unknown event name is a usage error.
+## [1.3.0] - 2026-10-19
+
+- `list --event <e,f,...>`: only the entries of those contract events (`pre-tool`, `post-tool`, `prompt`, `session-start`, `session-end`, `stop`, or `all`), across the agents, through each agent's own event names; an agent-only native event is left out, an unknown name is the usage error `install --event` gives. It combines with `--agent`, `--hook` and `--project`; files that keep no matching entry are left out, problems are counted on the entries shown, no match is a successful empty report, and `--json` adds `events` as given.
+- Contributed by [@yoreva-01](https://github.com/yoreva-01) in [#6](https://github.com/nrzz/everyhook/pull/6), for the good first issue [#5](https://github.com/nrzz/everyhook/issues/5).
 
 ## [1.2.0] - 2026-10-19
 
@@ -29,8 +32,9 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 - What the agents do is what the real binaries did: 52 raw hook outputs, the adapter at every event, project scope, and the case where everyhook itself is gone. They ran on Windows 11 and, on every push, on GitHub's Windows, macOS and Linux runners (`e2e.yml`). Cursor was not run.
 - Zero tokens for the tool. A hook costs nothing unless it returns a `reason` or a `context`; the longest reason of the examples is 140 characters.
 
+[1.3.0]: https://github.com/nrzz/everyhook/releases/tag/v1.3.0
 [1.2.0]: https://github.com/nrzz/everyhook/releases/tag/v1.2.0
 [1.1.0]: https://github.com/nrzz/everyhook/releases/tag/v1.1.0
 [1.0.0]: https://github.com/nrzz/everyhook/releases/tag/v1.0.0
 
-[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.3.0...HEAD
