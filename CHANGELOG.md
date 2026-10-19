@@ -4,9 +4,10 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
-### Added
+## [1.1.0] - 2026-10-19
 
-- Short agent names: commands accept `claude` (for `claude-code`), `gemini` (for `gemini-cli`), and `copilot` (for `copilot-cli`) in `--agent`, `explain`, `run`, `bench`, `install`, and `list`. Output and configuration files continue to use canonical long ids ([#1](https://github.com/nrzz/everyhook/issues/1)).
+- Short agent names: `claude` (for `claude-code`), `gemini` (for `gemini-cli`) and `copilot` (for `copilot-cli`) are accepted in `--agent` and as the agent of `explain`, on `install`, `uninstall`, `restore`, `list`, `bench` and `run`. The long name wins when both could apply; every output, text and JSON, and every line `install` writes into a configuration file keep the long ids. An unknown name is the usage error it was.
+- Contributed by [@Dasprakash-Sekar](https://github.com/Dasprakash-Sekar) in [#2](https://github.com/nrzz/everyhook/pull/2), the first outside pull request, for the good first issue [#1](https://github.com/nrzz/everyhook/issues/1).
 
 ## [1.0.0] - 2026-10-17
 
@@ -21,6 +22,7 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 - What the agents do is what the real binaries did: 52 raw hook outputs, the adapter at every event, project scope, and the case where everyhook itself is gone. They ran on Windows 11 and, on every push, on GitHub's Windows, macOS and Linux runners (`e2e.yml`). Cursor was not run.
 - Zero tokens for the tool. A hook costs nothing unless it returns a `reason` or a `context`; the longest reason of the examples is 140 characters.
 
+[1.1.0]: https://github.com/nrzz/everyhook/releases/tag/v1.1.0
 [1.0.0]: https://github.com/nrzz/everyhook/releases/tag/v1.0.0
 
-[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.1.0...HEAD

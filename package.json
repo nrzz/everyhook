@@ -1,6 +1,6 @@
 {
   "name": "everyhook",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Write a hook once, run it in every coding agent: Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and Cursor. One contract for the hook, an adapter per agent, install and uninstall into each agent's configuration, and a bench that puts the hook to the JSON each real agent sends. Zero dependencies, zero tokens.",
   "type": "module",
   "bin": {

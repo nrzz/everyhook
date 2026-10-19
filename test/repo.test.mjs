@@ -137,14 +137,14 @@ test("the licence, the conduct file, the changelog and the version agree", () =>
   assert.match(read("LICENSE"), /Copyright \(c\) 2026 Naresh Prabu/);
   assert.ok(exists("CODE_OF_CONDUCT.md"));
   const v = VERSION.replace(/\./g, "\\.");
-  assert.match(read("CHANGELOG.md"), new RegExp(`^## \\[${v}\\] - 2026-10-17$`, "m"));
+  assert.match(read("CHANGELOG.md"), new RegExp(`^## \\[${v}\\] - 2026-10-19$`, "m"));
   assert.match(read("CHANGELOG.md"), new RegExp(`^\\[${v}\\]: https://github\\.com/nrzz/everyhook/releases/tag/v${v}$`, "m"));
   for (const f of ["SECURITY.md", "SUPPORT.md", "ROADMAP.md", "CONTRIBUTING.md"]) assert.ok(exists(f), f);
   assert.match(read("SECURITY.md"), /security\/advisories\/new/);
   const roadmap = read("ROADMAP.md");
   const bullets = (roadmap.match(/^- /gm) || []).length;
   assert.ok(bullets >= 3 && bullets <= 5, `${bullets} next steps: three to five`);
-  assert.match(roadmap, /good first issue: \[#1\]\(https:\/\/github\.com\/nrzz\/everyhook\/issues\/1\)/, "the roadmap names the good first issue");
+  assert.match(roadmap, /good first issue: \[#3\]\(https:\/\/github\.com\/nrzz\/everyhook\/issues\/3\)/, "the roadmap names the good first issue");
   assert.match(read("CONTRIBUTING.md"), /## Where things are/);
 });
 
