@@ -4,8 +4,10 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-19
+
 - `list --problems`: only the entries and files with a problem, leaving out everything that is fine. It combines with `--agent`, `--hook`, `--event` and `--project`; problems are counted on the entries and files shown, no match is a successful empty report, and `--json` adds `problems: true`. An argument with a value, or `--problems` twice, is a usage error.
-- Contributed by [@yoreva-01](https://github.com/yoreva-01) for the good first issue [#7](https://github.com/nrzz/everyhook/issues/7).
+- Contributed by [@yoreva-01](https://github.com/yoreva-01) in [#8](https://github.com/nrzz/everyhook/pull/8), for the good first issue [#7](https://github.com/nrzz/everyhook/issues/7).
 
 ## [1.3.0] - 2026-10-19
 
@@ -35,9 +37,10 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 - What the agents do is what the real binaries did: 52 raw hook outputs, the adapter at every event, project scope, and the case where everyhook itself is gone. They ran on Windows 11 and, on every push, on GitHub's Windows, macOS and Linux runners (`e2e.yml`). Cursor was not run.
 - Zero tokens for the tool. A hook costs nothing unless it returns a `reason` or a `context`; the longest reason of the examples is 140 characters.
 
+[1.4.0]: https://github.com/nrzz/everyhook/releases/tag/v1.4.0
 [1.3.0]: https://github.com/nrzz/everyhook/releases/tag/v1.3.0
 [1.2.0]: https://github.com/nrzz/everyhook/releases/tag/v1.2.0
 [1.1.0]: https://github.com/nrzz/everyhook/releases/tag/v1.1.0
 [1.0.0]: https://github.com/nrzz/everyhook/releases/tag/v1.0.0
 
-[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.4.0...HEAD
