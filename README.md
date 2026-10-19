@@ -96,7 +96,7 @@ Change (they edit the agents' configuration files after a backup, and take --dry
              puts back the newest backup of each file install writes (the file as it is now is backed up first)
 
 Read (they change nothing):
-  list       [--agent <a,b,...>] [--hook <name>] [--project <dir>]
+  list       [--agent <a,b,...>] [--event <e,f,...>] [--hook <name>] [--project <dir>]
              every hook of every agent, from every file each one reads, with the problems it would trip over
   bench      <hook> [--agent <a,b,...>] [--event <e,f,...>] [--fixture <file>] [--fail-closed] [--timeout <seconds>]
              [--project <dir>]
@@ -330,7 +330,7 @@ codex
 2 hooks in 2 files, 2 by everyhook; 0 problems
 ```
 
-`list` reads every file each agent reads, for this machine and for the project (`--project <dir>`, the folder you are in by default): the user, project and local files, the managed and administrators' files, Copilot CLI's whole `hooks` folder and its inline `hooks` keys, and Codex CLI's `config.toml`. Each entry shows its event, matcher, timeout (with its unit), command and type, and whether everyhook wrote it. `--hook <name>` shows only the entries that run that hook (by file name or relative path, ignoring case on Windows and the direction of slashes), leaves out files with no matching entry, and counts problems on the entries shown. Exit 1 when there is a problem. The problems:
+`list` reads every file each agent reads, for this machine and for the project (`--project <dir>`, the folder you are in by default): the user, project and local files, the managed and administrators' files, Copilot CLI's whole `hooks` folder and its inline `hooks` keys, and Codex CLI's `config.toml`. Each entry shows its event, matcher, timeout (with its unit), command and type, and whether everyhook wrote it. `--event <e,f,...>` shows only the entries of those contract events across the agents (`all` for every one; an agent-only event is left out). `--hook <name>` shows only the entries that run that hook (by file name or relative path, ignoring case on Windows and the direction of slashes), leaves out files with no matching entry, and counts problems on the entries shown. Exit 1 when there is a problem. The problems:
 
 | Problem | Where |
 | --- | --- |
@@ -556,7 +556,7 @@ Two problems that `list` reports were put to the binaries that have them. Gemini
 
 ### The tests and CI
 
-**306 automated tests** (`npm test`; that is what `node --test` reports, less each of the 15 helper files that it lists as a test and that does nothing without its variable). 49 of them put the code to the real binaries and are skipped unless `E2E_CLAUDE`, `E2E_CODEX`, `E2E_GEMINI` and `E2E_COPILOT` name them; the others need nothing but Node, and a few skip themselves where a system lacks something (the right to make symlinks, on Windows). They cover every module, the editing of JSON by text with a fuzz round trip of 400 cases, ten layouts that `uninstall` must give back to the byte, and the 180 cases of the translation table (5 agents, 6 events, 6 answers).
+**309 automated tests** (`npm test`; that is what `node --test` reports, less each of the 15 helper files that it lists as a test and that does nothing without its variable). 49 of them put the code to the real binaries and are skipped unless `E2E_CLAUDE`, `E2E_CODEX`, `E2E_GEMINI` and `E2E_COPILOT` name them; the others need nothing but Node, and a few skip themselves where a system lacks something (the right to make symlinks, on Windows). They cover every module, the editing of JSON by text with a fuzz round trip of 400 cases, ten layouts that `uninstall` must give back to the byte, and the 180 cases of the translation table (5 agents, 6 events, 6 answers).
 
 `test.yml` runs the suite on Windows, macOS and Linux with Node 20, 22 and 24, and on Linux with Node 18. `e2e.yml` installs the four agents from npm on each of the three systems and runs the real-binary checks; it runs on every push and every week, so that a new version of an agent that changes any cell above fails there first. An agent that cannot be installed skips its checks with the reason and does not fail the run.
 

@@ -39,7 +39,7 @@ Change (they edit the agents' configuration files after a backup, and take --dry
              puts back the newest backup of each file install writes (the file as it is now is backed up first)
 
 Read (they change nothing):
-  list       [--agent <a,b,...>] [--hook <name>] [--project <dir>]
+  list       [--agent <a,b,...>] [--event <e,f,...>] [--hook <name>] [--project <dir>]
              every hook of every agent, from every file each one reads, with the problems it would trip over
   bench      <hook> [--agent <a,b,...>] [--event <e,f,...>] [--fixture <file>] [--fail-closed] [--timeout <seconds>]
              [--project <dir>]
@@ -69,7 +69,7 @@ const COMMANDS = {
   install: { options: ["agent", "all", "event", "scope", "project", "matcher", "timeout", "failClosed", "dryRun", "json"], positional: 1 },
   uninstall: { options: ["agent", "all", "event", "scope", "project", "dryRun", "json"], positional: 1 },
   restore: { options: ["agent", "all", "scope", "project", "dryRun", "json"], positional: 0 },
-  list: { options: ["agent", "all", "project", "json", "hook"], positional: 0 },
+  list: { options: ["agent", "all", "event", "project", "json", "hook"], positional: 0 },
   bench: { options: ["agent", "all", "event", "fixture", "failClosed", "timeout", "project", "json"], positional: 1 },
   explain: { options: ["json"], positional: 2 },
 };
@@ -233,7 +233,7 @@ export async function main(argv, io = {}) {
     }
 
     if (o.command === "list") {
-      const res = listHooks({ env, platform, project, agents, hook: o.hook || undefined });
+      const res = listHooks({ env, platform, project, agents, events: o.event || undefined, hook: o.hook || undefined });
       emit(listJson(res), listText(res, env));
       return res.counts.problems > 0 ? 1 : 0;
     }
