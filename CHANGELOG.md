@@ -4,6 +4,9 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+- `list --problems`: only the entries and files with a problem, leaving out everything that is fine. It combines with `--agent`, `--hook`, `--event` and `--project`; problems are counted on the entries and files shown, no match is a successful empty report, and `--json` adds `problems: true`. An argument with a value, or `--problems` twice, is a usage error.
+- Contributed by [@yoreva-01](https://github.com/yoreva-01) for the good first issue [#7](https://github.com/nrzz/everyhook/issues/7).
+
 ## [1.3.0] - 2026-10-19
 
 - `list --event <e,f,...>`: only the entries of those contract events (`pre-tool`, `post-tool`, `prompt`, `session-start`, `session-end`, `stop`, or `all`), across the agents, through each agent's own event names; an agent-only native event is left out, an unknown name is the usage error `install --event` gives. It combines with `--agent`, `--hook` and `--project`; files that keep no matching entry are left out, problems are counted on the entries shown, no match is a successful empty report, and `--json` adds `events` as given.

@@ -363,3 +363,104 @@ test("list --event unknown name exits 2", async () => {
   assert.match(missing.err, /--event needs a value/);
 });
 
+test("list --problems keeps only entries and files with problems (text and JSON)", async () => {
+  const w = world("list-problems");
+  // One good entry (fine, should be left out)
+  w.write(path.join(w.claude, "settings.json"), J({ hooks: { PreToolUse: [{ hooks: [{ type: "command", command: `${node} -e 0`, timeout: 5 }] }] } }));
+  // Three kinds of problems:
+  // 1. A misspelt event
+  w.write(path.join(w.codex, "hooks.json"), J({ hooks: { Pretool: [{ hooks: [{ type: "command", command: `${node} -e 0`, timeout: 5 }] }] } }));
+  // 2. A missing program
+  w.write(path.join(w.copilot, "hooks", "bad-prog.json"), J({ version: 1, hooks: { preToolUse: [{ type: "command", bash: "/path/to/nonexistent/program-xyz" }] } }));
+  // 3. A file of the wrong shape
+  w.write(path.join(w.gemini, "settings.json"), J({ hooks: [] }));
+
+  // Without --problems: all 4 files found, 3 entries, 3 problems
+  const full = await listJson(w);
+  assert.equal(full.counts.entries, 3);
+  assert.equal(full.counts.files, 4);
+  assert.equal(full.counts.problems, 3);
+  assert.equal(full.problems, undefined);
+
+  // With --problems (JSON): only the 2 problem entries and 3 problem files kept
+  const j = await listJson(w, ["--problems"]);
+  assert.equal(j.ok, false);
+  assert.equal(j.problems, true);
+  assert.equal(j.counts.entries, 2);
+  assert.equal(j.counts.files, 3);
+  assert.equal(j.counts.problems, 3);
+  assert.deepEqual(j.entries.map((e) => e.agent).sort(), ["codex", "copilot-cli"]);
+  assert.deepEqual(j.files.map((f) => f.agent).sort(), ["codex", "copilot-cli", "gemini-cli"]);
+  assert.match(j.entries[0].problems[0], /Pretool is not an event/);
+  assert.match(j.entries[1].problems[0], /the program does not exist/);
+  assert.match(j.files.find((f) => f.agent === "gemini-cli").problems[0], /"hooks" is not an object/);
+
+  // With --problems (text): exit 1, fine agent left out, closing line counts shown items
+  const r = await run(["list", "--problems"], { w });
+  assert.equal(r.code, 1);
+  assert.ok(!r.out.includes("claude-code"), "fine agent is omitted");
+  assert.ok(r.out.includes("codex"));
+  assert.ok(r.out.includes("copilot-cli"));
+  assert.ok(r.out.includes("gemini-cli"));
+  assert.match(r.out, /2 hooks in 3 files, 0 by everyhook; 3 problems/);
+});
+
+test("list --problems combines with --agent and --hook", async () => {
+  const w = world("list-problems-combo");
+  w.write(path.join(w.claude, "settings.json"), J({ hooks: { PreToolUse: [{ hooks: [{ type: "command", command: `${node} -e 0`, timeout: 5 }] }] } }));
+  w.write(path.join(w.codex, "hooks.json"), J({ hooks: { Pretool: [{ hooks: [{ type: "command", command: `${node} -e 0`, timeout: 5 }] }] } }));
+  w.write(path.join(w.copilot, "hooks", "bad-prog.json"), J({ version: 1, hooks: { preToolUse: [{ type: "command", bash: "/path/to/nonexistent/program-xyz" }] } }));
+  w.write(path.join(w.gemini, "settings.json"), J({ hooks: [] }));
+
+  // Combined with --agent
+  const jAgent = await listJson(w, ["--problems", "--agent", "codex"]);
+  assert.equal(jAgent.ok, false);
+  assert.equal(jAgent.problems, true);
+  assert.equal(jAgent.counts.entries, 1);
+  assert.equal(jAgent.counts.files, 1);
+  assert.equal(jAgent.counts.problems, 1);
+  assert.equal(jAgent.entries[0].agent, "codex");
+
+  // Combined with --hook
+  const jHook = await listJson(w, ["--problems", "--hook", "program-xyz"]);
+  assert.equal(jHook.ok, false);
+  assert.equal(jHook.problems, true);
+  assert.equal(jHook.counts.entries, 1);
+  assert.equal(jHook.counts.files, 1);
+  assert.equal(jHook.counts.problems, 1);
+  assert.equal(jHook.entries[0].agent, "copilot-cli");
+});
+
+test("list --problems with no problems reports 0 hooks in 0 files and exits 0", async () => {
+  const w = world("list-problems-clean");
+  await run(["install", EXAMPLE, "--agent", "claude-code"], { w });
+
+  // Text report
+  const emptyText = await run(["list", "--problems"], { w });
+  assert.equal(emptyText.code, 0);
+  assert.equal(emptyText.out, "0 hooks in 0 files, 0 by everyhook; 0 problems\n");
+
+  // JSON report
+  const emptyJson = await listJson(w, ["--problems"]);
+  assert.equal(emptyJson.ok, true);
+  assert.equal(emptyJson.problems, true);
+  assert.deepEqual(emptyJson.counts, { files: 0, entries: 0, ours: 0, problems: 0 });
+  assert.deepEqual(emptyJson.files, []);
+  assert.deepEqual(emptyJson.entries, []);
+});
+
+test("list --problems usage errors: with value or twice exits 2", async () => {
+  const w = world("list-problems-errors");
+  const val = await run(["list", "--problems=yes"], { w });
+  assert.equal(val.code, 2);
+  assert.match(val.err, /--problems takes no value/);
+
+  const dup = await run(["list", "--problems", "--problems"], { w });
+  assert.equal(dup.code, 2);
+  assert.match(dup.err, /--problems can only be given once/);
+
+  const wrongCmd = await run(["install", EXAMPLE, "--problems"], { w });
+  assert.equal(wrongCmd.code, 2);
+  assert.match(wrongCmd.err, /install does not take --problems/);
+});
+
