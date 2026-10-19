@@ -4,6 +4,8 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+- `list --event <e,f,...>`: only the entries of those contract events (`all` for every one), across the agents, mapped through each agent's own event names; an agent-only event is left out. Files that keep no matching entry are left out, problems are counted on the entries shown, and no match is a successful empty report; `--json` adds `events`. An unknown event name is a usage error.
+
 ## [1.2.0] - 2026-10-19
 
 - `list --hook <name>`: only the entries of one hook, across the agents: the entries `install` wrote for it and any other entry whose command line holds the name as a whole file name or path (`block-force-push.mjs` matches `.../examples/block-force-push.mjs`; `force` matches nothing), ignoring case on Windows and the direction of slashes. Files that keep no matching entry are left out, problems are counted on the entries shown, and no match is a successful empty report; `--json` adds `hook`. An empty name, or `--hook` twice, is a usage error.

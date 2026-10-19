@@ -287,3 +287,79 @@ test("list --hook usage errors exit 2", async () => {
   assert.match(twice.err, /--hook can only be given once/);
 });
 
+test("list --event filters entries across agents, supports all, combinations with --agent and --hook, and ignores agent-only native events", async () => {
+  const w = world("list-event");
+  await run(["install", EXAMPLE, "--agent", "claude-code,codex", "--event", "pre-tool,stop"], { w });
+
+  // Add an agent-only native event by hand (Notification is documented for Claude Code, but has no contract event)
+  const settingsPath = path.join(w.claude, "settings.json");
+  const settings = w.readJson(settingsPath);
+  settings.hooks.Notification = [{ hooks: [{ type: "command", command: `${node} -e 0` }] }];
+  w.write(settingsPath, J(settings));
+
+  // Single event filter
+  const jPre = await listJson(w, ["--event", "pre-tool"]);
+  assert.equal(jPre.ok, true);
+  assert.deepEqual(jPre.events, ["pre-tool"]);
+  assert.equal(jPre.counts.entries, 2);
+  assert.equal(jPre.counts.ours, 2);
+  assert.equal(jPre.counts.files, 2);
+  assert.ok(jPre.entries.every((e) => e.contractEvent === "pre-tool"));
+
+  // Combination with --agent
+  const jAgent = await listJson(w, ["--event", "stop,session-end", "--agent", "claude,codex"]);
+  assert.deepEqual(jAgent.events, ["stop", "session-end"]);
+  assert.equal(jAgent.counts.entries, 2);
+  assert.deepEqual(jAgent.entries.map((e) => [e.agent, e.contractEvent]), [["claude-code", "stop"], ["codex", "stop"]]);
+
+  // Combination with --hook
+  const jHook = await listJson(w, ["--event", "pre-tool", "--hook", "block-force-push.mjs"]);
+  assert.deepEqual(jHook.events, ["pre-tool"]);
+  assert.equal(jHook.hook, "block-force-push.mjs");
+  assert.equal(jHook.counts.entries, 2);
+
+  // --event all expands to all contract events; agent-only native event (Notification) is left out
+  const jAll = await listJson(w, ["--event", "all"]);
+  assert.equal(jAll.ok, true);
+  assert.deepEqual(jAll.events, ["pre-tool", "post-tool", "prompt", "session-start", "session-end", "stop"]);
+  assert.equal(jAll.counts.entries, 4);
+  assert.ok(!jAll.entries.some((e) => e.event === "Notification"));
+});
+
+test("list --event text output leaves out files with no matching entry, and empty match reports 0 hooks", async () => {
+  const w = world("list-event-text");
+  await run(["install", EXAMPLE, "--agent", "claude-code,codex", "--event", "pre-tool"], { w });
+
+  // Matching text report
+  const r = await run(["list", "--event", "pre-tool"], { w });
+  assert.equal(r.code, 0);
+  assert.ok(r.out.includes("claude-code"));
+  assert.ok(r.out.includes("codex"));
+  assert.ok(r.out.includes("PreToolUse"));
+  assert.match(r.out, /2 hooks in 2 files, 2 by everyhook; 0 problems/);
+
+  // No match text report: exit 0, exactly 0 hooks in 0 files
+  const empty = await run(["list", "--event", "stop"], { w });
+  assert.equal(empty.code, 0);
+  assert.equal(empty.out, "0 hooks in 0 files, 0 by everyhook; 0 problems\n");
+
+  // No match JSON report: exit 0, events preserved, files and entries empty
+  const emptyJson = await listJson(w, ["--event", "stop"]);
+  assert.equal(emptyJson.ok, true);
+  assert.deepEqual(emptyJson.events, ["stop"]);
+  assert.deepEqual(emptyJson.counts, { files: 0, entries: 0, ours: 0, problems: 0 });
+  assert.deepEqual(emptyJson.files, []);
+  assert.deepEqual(emptyJson.entries, []);
+});
+
+test("list --event unknown name exits 2", async () => {
+  const w = world("list-event-errors");
+  const unknown = await run(["list", "--event", "not-an-event"], { w });
+  assert.equal(unknown.code, 2);
+  assert.match(unknown.err, /unknown event "not-an-event"/);
+
+  const missing = await run(["list", "--event"], { w });
+  assert.equal(missing.code, 2);
+  assert.match(missing.err, /--event needs a value/);
+});
+
