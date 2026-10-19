@@ -79,7 +79,7 @@ function entryProblems(mod, agent, e, ctx) {
  * Lists every hook. `opts`: { env, platform, project, agents }. Returns
  * { project, files: [ { agent, scope, file, status, problems } ], entries: [ ... ], counts }.
  */
-export function listHooks({ env = process.env, platform = process.platform, project, agents = AGENTS, events, hook } = {}) {
+export function listHooks({ env = process.env, platform = process.platform, project, agents = AGENTS, events, hook, problems = false } = {}) {
   const ctx = { env, platform };
   const files = [];
   const entries = [];
@@ -165,13 +165,19 @@ export function listHooks({ env = process.env, platform = process.platform, proj
     const keptFiles = new Set(filteredEntries.map((e) => e.file));
     filteredFiles = filteredFiles.filter((f) => keptFiles.has(f.file));
   }
-  const problemCount = (hook !== undefined || events !== undefined)
-    ? filteredEntries.reduce((n, e) => n + e.problems.length, 0)
+  if (problems) {
+    filteredEntries = filteredEntries.filter((e) => e.problems && e.problems.length > 0);
+    const keptFiles = new Set(filteredEntries.map((e) => e.file));
+    filteredFiles = filteredFiles.filter((f) => (f.problems && f.problems.length > 0) || keptFiles.has(f.file));
+  }
+  const problemCount = (hook !== undefined || events !== undefined || problems)
+    ? filteredFiles.reduce((n, f) => n + f.problems.length, 0) + filteredEntries.reduce((n, e) => n + e.problems.length, 0)
     : files.reduce((n, f) => n + f.problems.length, 0) + entries.reduce((n, e) => n + e.problems.length, 0);
   return {
     project: project || null,
     ...(events !== undefined ? { events: Array.isArray(events) ? events : [events] } : {}),
     ...(hook !== undefined ? { hook } : {}),
+    ...(problems ? { problems: true } : {}),
     files: filteredFiles,
     entries: filteredEntries,
     counts: {
