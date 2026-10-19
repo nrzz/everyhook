@@ -79,7 +79,7 @@ function entryProblems(mod, agent, e, ctx) {
  * Lists every hook. `opts`: { env, platform, project, agents }. Returns
  * { project, files: [ { agent, scope, file, status, problems } ], entries: [ ... ], counts }.
  */
-export function listHooks({ env = process.env, platform = process.platform, project, agents = AGENTS } = {}) {
+export function listHooks({ env = process.env, platform = process.platform, project, agents = AGENTS, hook } = {}) {
   const ctx = { env, platform };
   const files = [];
   const entries = [];
@@ -152,6 +152,65 @@ export function listHooks({ env = process.env, platform = process.platform, proj
       if (kinds.has("json") && kinds.has("toml")) for (const r of recs) r.problems.push("this layer defines hooks in hooks.json and in config.toml: Codex merges them and warns at startup; keep one");
     }
   }
-  const problemCount = files.reduce((n, f) => n + f.problems.length, 0) + entries.reduce((n, e) => n + e.problems.length, 0);
-  return { project: project || null, files, entries, counts: { files: files.filter((f) => f.status !== "missing").length, entries: entries.length, ours: entries.filter((e) => e.ours).length, problems: problemCount } };
+  let filteredEntries = entries;
+  let filteredFiles = files;
+  if (hook) {
+    filteredEntries = entries.filter((e) => matchesHook(e, hook, platform));
+    const keptFiles = new Set(filteredEntries.map((e) => e.file));
+    filteredFiles = files.filter((f) => keptFiles.has(f.file));
+  }
+  const problemCount = hook
+    ? filteredEntries.reduce((n, e) => n + e.problems.length, 0)
+    : files.reduce((n, f) => n + f.problems.length, 0) + entries.reduce((n, e) => n + e.problems.length, 0);
+  return {
+    project: project || null,
+    ...(hook !== undefined ? { hook } : {}),
+    files: filteredFiles,
+    entries: filteredEntries,
+    counts: {
+      files: filteredFiles.filter((f) => f.status !== "missing").length,
+      entries: filteredEntries.length,
+      ours: filteredEntries.filter((e) => e.ours).length,
+      problems: problemCount,
+    },
+  };
 }
+
+/**
+ * Whether an entry (or a command line string) runs a hook of that name.
+ * Matches by full path, relative path as given, or file name, ignoring case on Windows and slash direction.
+ */
+export function matchesHook(entryOrLine, name, platform = process.platform) {
+  if (!name || !entryOrLine) return false;
+  const normName = String(name).replace(/[\\/]+/g, "/").replace(/^\.\//, "").replace(/\/+$/, "");
+  const fold = (s) => (platform === "win32" ? String(s).toLowerCase() : String(s));
+  const target = fold(normName);
+  const targetBase = fold(path.posix.basename(normName));
+
+  // If entry object with hook property from an everyhook run:
+  const hookPath = typeof entryOrLine === "object" && entryOrLine.hook ? fold(String(entryOrLine.hook).replace(/[\\/]+/g, "/").replace(/\/+$/, "")) : null;
+  if (hookPath) {
+    if (hookPath === target) return true;
+    if (hookPath.endsWith(`/${target}`)) return true;
+    if (fold(path.posix.basename(hookPath)) === targetBase && (!normName.includes("/") || target === targetBase)) return true;
+  }
+
+  // Check command line
+  const cmd = typeof entryOrLine === "object" ? entryOrLine.command : String(entryOrLine);
+  if (typeof cmd !== "string" || !cmd.trim()) return false;
+  const normCmd = fold(cmd.replace(/[\\/]+/g, "/"));
+
+  // Check if target appears as a whole path segment or file name
+  const escapedTarget = target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const targetRe = new RegExp(`(^|[\\s"';,()=/])${escapedTarget}($|[\\s"';,()=/])`);
+  if (targetRe.test(normCmd)) return true;
+
+  if (!normName.includes("/")) {
+    const escapedBase = targetBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const baseRe = new RegExp(`(^|[\\s"';,()=/])${escapedBase}($|[\\s"';,()=/])`);
+    if (baseRe.test(normCmd)) return true;
+  }
+
+  return false;
+}
+

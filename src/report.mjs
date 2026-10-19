@@ -87,7 +87,7 @@ export function restoreText(res, ctx) {
 // ---- list -----------------------------------------------------------------------------------------------------
 
 export function listJson(res) {
-  return { ok: res.counts.problems === 0, project: res.project, counts: res.counts, files: res.files.filter((f) => f.status !== "missing"), entries: res.entries };
+  return { ok: res.counts.problems === 0, project: res.project, counts: res.counts, ...(res.hook !== undefined ? { hook: res.hook } : {}), files: res.files.filter((f) => f.status !== "missing"), entries: res.entries };
 }
 
 export function listText(res, env) {
@@ -95,7 +95,10 @@ export function listText(res, env) {
   const byAgent = new Map();
   for (const f of res.files) if (f.status !== "missing") (byAgent.get(f.agent) || byAgent.set(f.agent, { files: [], entries: [] }).get(f.agent)).files.push(f);
   for (const e of res.entries) (byAgent.get(e.agent) || byAgent.set(e.agent, { files: [], entries: [] }).get(e.agent)).entries.push(e);
-  if (!byAgent.size) return "no agent has a hooks file on this machine or in this project\n";
+  if (!byAgent.size) {
+    if (res.hook !== undefined) return `${res.counts.entries} ${res.counts.entries === 1 ? "hook" : "hooks"} in ${res.counts.files} ${res.counts.files === 1 ? "file" : "files"}, ${res.counts.ours} by everyhook; ${res.counts.problems} ${res.counts.problems === 1 ? "problem" : "problems"}\n`;
+    return "no agent has a hooks file on this machine or in this project\n";
+  }
   for (const [agent, g] of byAgent) {
     lines.push(agent);
     const files = new Set([...g.files.map((f) => f.file), ...g.entries.map((e) => e.file)]);

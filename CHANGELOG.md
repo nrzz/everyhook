@@ -4,6 +4,8 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+- Add `list --hook <name>`: only the entries of one hook, across the agents, matched by file name or relative path. Files that keep no matching entry are left out, and problems are counted on the entries shown.
+
 ## [1.1.0] - 2026-10-19
 
 - Short agent names: `claude` (for `claude-code`), `gemini` (for `gemini-cli`) and `copilot` (for `copilot-cli`) are accepted in `--agent` and as the agent of `explain`, on `install`, `uninstall`, `restore`, `list`, `bench` and `run`. The long name wins when both could apply; every output, text and JSON, and every line `install` writes into a configuration file keep the long ids. An unknown name is the usage error it was.

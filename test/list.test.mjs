@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { listHooks, missingProgram } from "../src/list.mjs";
+import { listHooks, matchesHook, missingProgram } from "../src/list.mjs";
 
 const EXAMPLE = path.join(ROOT, "examples", "block-force-push.mjs");
 const J = (o) => JSON.stringify(o, null, 2);
@@ -196,3 +196,94 @@ test("--agent narrows the list", async () => {
   assert.deepEqual([...new Set(j.entries.map((e) => e.agent))], ["codex", "cursor"]);
   assert.equal(listHooks({ env: w.env, platform: process.platform, project: w.work, agents: ["gemini-cli"] }).entries.length, 1);
 });
+
+test("list --hook matches by file name, relative path, and entries install wrote", async () => {
+  const w = world("list-hook");
+  await run(["install", EXAMPLE, "--agent", "claude-code,codex"], { w });
+  // Add a non-everyhook hook running block-force-push.mjs and another hook
+  const settingsPath = path.join(w.claude, "settings.json");
+  const settings = w.readJson(settingsPath);
+  settings.hooks.SessionStart = [{ hooks: [{ type: "command", command: "bash /scripts/block-force-push.mjs" }] }];
+  settings.hooks.Stop = [{ hooks: [{ type: "command", command: "python C:/tools/my-script.py" }] }];
+  w.write(settingsPath, J(settings));
+
+  // Match by file name
+  const jName = await listJson(w, ["--hook", "block-force-push.mjs"]);
+  assert.equal(jName.counts.entries, 3);
+  assert.equal(jName.counts.ours, 2);
+  assert.equal(jName.counts.files, 2);
+  assert.equal(jName.hook, "block-force-push.mjs");
+  assert.ok(jName.entries.every((e) => e.command.includes("block-force-push.mjs")));
+
+  // Match by relative path as given
+  const jPath = await listJson(w, ["--hook", "examples/block-force-push.mjs"]);
+  assert.equal(jPath.counts.entries, 2);
+  assert.equal(jPath.counts.ours, 2);
+  assert.equal(jPath.counts.files, 2);
+  assert.equal(jPath.hook, "examples/block-force-push.mjs");
+
+  // Substring of file name matches nothing
+  const jForce = await listJson(w, ["--hook", "force"]);
+  assert.equal(jForce.counts.entries, 0);
+  assert.equal(jForce.counts.files, 0);
+  assert.equal(jForce.counts.ours, 0);
+  assert.equal(jForce.counts.problems, 0);
+  assert.deepEqual(jForce.entries, []);
+  assert.deepEqual(jForce.files, []);
+});
+
+test("list --hook text output leaves out files with no matching entry, and empty match reports 0 hooks", async () => {
+  const w = world("list-hook-text");
+  await run(["install", EXAMPLE, "--agent", "claude-code,codex"], { w });
+
+  // Matching text report
+  const r = await run(["list", "--hook", "block-force-push.mjs"], { w });
+  assert.equal(r.code, 0);
+  assert.ok(r.out.includes("claude-code"));
+  assert.ok(r.out.includes("codex"));
+  assert.ok(!r.out.includes("gemini-cli"));
+  assert.ok(!r.out.includes("copilot-cli"));
+  assert.ok(!r.out.includes("cursor"));
+  assert.match(r.out, /2 hooks in 2 files, 2 by everyhook; 0 problems/);
+
+  // No match text report: exit 0, exactly 0 hooks in 0 files
+  const empty = await run(["list", "--hook", "nonexistent.mjs"], { w });
+  assert.equal(empty.code, 0);
+  assert.equal(empty.out, "0 hooks in 0 files, 0 by everyhook; 0 problems\n");
+
+  // No match JSON report: exit 0, hook preserved, files and entries empty
+  const emptyJson = await listJson(w, ["--hook", "nonexistent.mjs"]);
+  assert.equal(emptyJson.ok, true);
+  assert.equal(emptyJson.hook, "nonexistent.mjs");
+  assert.deepEqual(emptyJson.counts, { files: 0, entries: 0, ours: 0, problems: 0 });
+  assert.deepEqual(emptyJson.files, []);
+  assert.deepEqual(emptyJson.entries, []);
+});
+
+test("list --hook handles Windows case folding and slash direction", () => {
+  assert.equal(matchesHook({ command: "node C:/tools/block-force-push.mjs" }, "block-force-push.mjs", "win32"), true);
+  assert.equal(matchesHook({ command: "node C:\\\\tools\\\\block-force-push.mjs" }, "block-force-push.mjs", "win32"), true);
+  assert.equal(matchesHook({ command: "node C:/tools/block-force-push.mjs" }, "BLOCK-FORCE-PUSH.MJS", "win32"), true);
+  assert.equal(matchesHook({ command: "node /tools/block-force-push.mjs" }, "BLOCK-FORCE-PUSH.MJS", "linux"), false);
+  assert.equal(matchesHook({ command: "node /tools/block-force-push.mjs" }, "tools/block-force-push.mjs", "linux"), true);
+  assert.equal(matchesHook({ command: "node /tools/block-force-push.mjs" }, "tools\\\\block-force-push.mjs", "linux"), true);
+  assert.equal(matchesHook({ command: "node /tools/block-force-push.mjs" }, "force", "win32"), false);
+  assert.equal(matchesHook({ hook: "/a/b/examples/block-force-push.mjs", command: "..." }, "examples/block-force-push.mjs", "linux"), true);
+  assert.equal(matchesHook({ hook: "/a/b/examples/block-force-push.mjs", command: "..." }, "block-force-push.mjs", "linux"), true);
+});
+
+test("list --hook usage errors exit 2", async () => {
+  const w = world("list-hook-errors");
+  const missing = await run(["list", "--hook"], { w });
+  assert.equal(missing.code, 2);
+  assert.match(missing.err, /--hook needs a value/);
+
+  const empty = await run(["list", "--hook", ""], { w });
+  assert.equal(empty.code, 2);
+  assert.match(empty.err, /--hook needs a hook name/);
+
+  const twice = await run(["list", "--hook", "a", "--hook", "b"], { w });
+  assert.equal(twice.code, 2);
+  assert.match(twice.err, /--hook can only be given once/);
+});
+
