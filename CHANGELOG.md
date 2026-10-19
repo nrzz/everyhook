@@ -4,7 +4,10 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
-- Add `list --hook <name>`: only the entries of one hook, across the agents, matched by file name or relative path. Files that keep no matching entry are left out, and problems are counted on the entries shown.
+## [1.2.0] - 2026-10-19
+
+- `list --hook <name>`: only the entries of one hook, across the agents: the entries `install` wrote for it and any other entry whose command line holds the name as a whole file name or path (`block-force-push.mjs` matches `.../examples/block-force-push.mjs`; `force` matches nothing), ignoring case on Windows and the direction of slashes. Files that keep no matching entry are left out, problems are counted on the entries shown, and no match is a successful empty report; `--json` adds `hook`. An empty name, or `--hook` twice, is a usage error.
+- Contributed by [@yoreva-01](https://github.com/yoreva-01) in [#4](https://github.com/nrzz/everyhook/pull/4), for the good first issue [#3](https://github.com/nrzz/everyhook/issues/3).
 
 ## [1.1.0] - 2026-10-19
 
@@ -24,7 +27,8 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 - What the agents do is what the real binaries did: 52 raw hook outputs, the adapter at every event, project scope, and the case where everyhook itself is gone. They ran on Windows 11 and, on every push, on GitHub's Windows, macOS and Linux runners (`e2e.yml`). Cursor was not run.
 - Zero tokens for the tool. A hook costs nothing unless it returns a `reason` or a `context`; the longest reason of the examples is 140 characters.
 
+[1.2.0]: https://github.com/nrzz/everyhook/releases/tag/v1.2.0
 [1.1.0]: https://github.com/nrzz/everyhook/releases/tag/v1.1.0
 [1.0.0]: https://github.com/nrzz/everyhook/releases/tag/v1.0.0
 
-[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.2.0...HEAD

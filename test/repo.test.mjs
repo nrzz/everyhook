@@ -144,7 +144,7 @@ test("the licence, the conduct file, the changelog and the version agree", () =>
   const roadmap = read("ROADMAP.md");
   const bullets = (roadmap.match(/^- /gm) || []).length;
   assert.ok(bullets >= 3 && bullets <= 5, `${bullets} next steps: three to five`);
-  assert.match(roadmap, /good first issue: \[#3\]\(https:\/\/github\.com\/nrzz\/everyhook\/issues\/3\)/, "the roadmap names the good first issue");
+  assert.match(roadmap, /good first issue: \[#5\]\(https:\/\/github\.com\/nrzz\/everyhook\/issues\/5\)/, "the roadmap names the good first issue");
   assert.match(read("CONTRIBUTING.md"), /## Where things are/);
 });
 
