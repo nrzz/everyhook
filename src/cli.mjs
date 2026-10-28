@@ -39,7 +39,7 @@ Change (they edit the agents' configuration files after a backup, and take --dry
              puts back the newest backup of each file install writes (the file as it is now is backed up first)
 
 Read (they change nothing):
-  list       [--agent <a,b,...>] [--event <e,f,...>] [--hook <name>] [--problems] [--project <dir>]
+  list       [--agent <a,b,...>] [--event <e,f,...>] [--hook <name>] [--problems] [--ours] [--project <dir>]
              every hook of every agent, from every file each one reads, with the problems it would trip over
   bench      <hook> [--agent <a,b,...>] [--event <e,f,...>] [--fixture <file>] [--fail-closed] [--timeout <seconds>]
              [--project <dir>]
@@ -69,12 +69,12 @@ const COMMANDS = {
   install: { options: ["agent", "all", "event", "scope", "project", "matcher", "timeout", "failClosed", "dryRun", "json"], positional: 1 },
   uninstall: { options: ["agent", "all", "event", "scope", "project", "dryRun", "json"], positional: 1 },
   restore: { options: ["agent", "all", "scope", "project", "dryRun", "json"], positional: 0 },
-  list: { options: ["agent", "all", "event", "problems", "project", "json", "hook"], positional: 0 },
+  list: { options: ["agent", "all", "event", "problems", "ours", "project", "json", "hook"], positional: 0 },
   bench: { options: ["agent", "all", "event", "fixture", "failClosed", "timeout", "project", "json"], positional: 1 },
   explain: { options: ["json"], positional: 2 },
 };
 
-const FLAGS = { "--json": "json", "--dry-run": "dryRun", "--all": "all", "--fail-closed": "failClosed", "--problems": "problems", "-h": "help", "--help": "help", "-v": "version", "--version": "version" };
+const FLAGS = { "--json": "json", "--dry-run": "dryRun", "--all": "all", "--fail-closed": "failClosed", "--problems": "problems", "--ours": "ours", "-h": "help", "--help": "help", "-v": "version", "--version": "version" };
 const VALUES = { "--agent": "agent", "--event": "event", "--scope": "scope", "--project": "project", "--matcher": "matcher", "--timeout": "timeout", "--fixture": "fixture", "--hook": "hook" };
 
 class UsageError extends Error {}
@@ -86,7 +86,7 @@ const list = (v) => String(v).split(",").map((s) => s.trim()).filter(Boolean);
  * json, dryRun, all, failClosed, help, version, hook, hookArgs, given } or throws a UsageError.
  */
 export function parseArgs(argv) {
-  const o = { command: null, positional: [], agent: null, event: null, scope: "user", project: undefined, matcher: undefined, timeout: undefined, fixture: [], json: false, dryRun: false, all: false, failClosed: false, problems: false, help: false, version: false, hook: null, hookArgs: [], given: new Set() };
+  const o = { command: null, positional: [], agent: null, event: null, scope: "user", project: undefined, matcher: undefined, timeout: undefined, fixture: [], json: false, dryRun: false, all: false, failClosed: false, problems: false, ours: false, help: false, version: false, hook: null, hookArgs: [], given: new Set() };
   let hookTokens = null;
   const positional = [];
   for (let i = 0; i < argv.length; i++) {
@@ -107,6 +107,7 @@ export function parseArgs(argv) {
     } else if (Object.prototype.hasOwnProperty.call(FLAGS, flag)) {
       if (eq) throw new UsageError(`${flag} takes no value`);
       if (flag === "--problems" && o.given.has("problems")) throw new UsageError("--problems can only be given once");
+      if (flag === "--ours" && o.given.has("ours")) throw new UsageError("--ours can only be given once");
       o[FLAGS[flag]] = true;
       o.given.add(FLAGS[flag]);
     } else if (a.startsWith("-") && a !== "-") throw new UsageError(`unknown option ${a}`);
@@ -235,7 +236,7 @@ export async function main(argv, io = {}) {
     }
 
     if (o.command === "list") {
-      const res = listHooks({ env, platform, project, agents, events: o.event || undefined, hook: o.hook || undefined, problems: o.problems });
+      const res = listHooks({ env, platform, project, agents, events: o.event || undefined, hook: o.hook || undefined, problems: o.problems, ours: o.ours });
       emit(listJson(res), listText(res, env));
       return res.counts.problems > 0 ? 1 : 0;
     }

@@ -4,6 +4,9 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+- `list --ours`: only the entries everyhook wrote across the agents, leaving out files whose hooks are all non-everyhook. It combines with `--agent`, `--event`, `--hook`, `--problems` and `--project`; problems are counted on the entries shown, no match is a successful empty report, and `--json` adds `ours: true`. An argument with a value, or `--ours` twice, is a usage error.
+- Contributed by [@yoreva-01](https://github.com/yoreva-01) for the good first issue [#9](https://github.com/nrzz/everyhook/issues/9).
+
 ## [1.4.0] - 2026-10-19
 
 - `list --problems`: only the entries and files with a problem, leaving out everything that is fine. It combines with `--agent`, `--hook`, `--event` and `--project`; problems are counted on the entries and files shown, no match is a successful empty report, and `--json` adds `problems: true`. An argument with a value, or `--problems` twice, is a usage error.
