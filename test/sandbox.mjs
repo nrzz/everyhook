@@ -78,6 +78,7 @@ export function fakeServer(handler) {
   const requests = [];
   const server = http.createServer((req, res) => {
     let raw = "";
+    req.setEncoding("utf8"); // so a character split across two chunks still decodes
     req.on("data", (c) => { raw += c; });
     req.on("end", () => {
       let body = {};
