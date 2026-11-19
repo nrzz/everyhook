@@ -4,6 +4,10 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-11-19
+
+- The release of two corrections made on main after 1.5.1, so that the newest release is the one whose real-binary checks are green on every system. The README and the 1.5.1 lines of this changelog now say that a project's Codex hooks always ran only in a trusted project, and that before Codex 0.169.0 a run with `sandbox_mode = "danger-full-access"` trusted the folder by itself (put to 0.166.0 and 0.168.0: the run wrote the entry, and the project's hooks then ran; in the default sandbox they did not), where 1.5.1 said the bypass flag had run them (a9eb5dd). The real-binary check of `--trust` reads the entry Codex writes on Linux and macOS, in double quotes, as well as the one on Windows, in single quotes; on 1.5.1 it failed on Ubuntu and macOS for that reason alone (d534ce4). The e2e of that tree is green on Ubuntu, macOS and Windows on codex-cli 0.170.0, Copilot CLI 1.0.114 and Gemini CLI 0.69.0 (runs 44504088083 and 44504079232).
+
 ## [1.5.1] - 2026-11-19
 
 - `install --scope project` for Codex CLI now says that Codex loads a project's hooks only in a trusted project, and how to trust it: trust the folder when Codex asks, run `codex exec --trust` once in it (0.169.0 or later), or add `[projects.'<folder>'] trust_level = "trusted"` to `config.toml` in `CODEX_HOME`. The README, the conformance note and the "What still needs you" section say the same.
@@ -48,6 +52,7 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 - What the agents do is what the real binaries did: 52 raw hook outputs, the adapter at every event, project scope, and the case where everyhook itself is gone. They ran on Windows 11 and, on every push, on GitHub's Windows, macOS and Linux runners (`e2e.yml`). Cursor was not run.
 - Zero tokens for the tool. A hook costs nothing unless it returns a `reason` or a `context`; the longest reason of the examples is 140 characters.
 
+[1.5.2]: https://github.com/nrzz/everyhook/releases/tag/v1.5.2
 [1.5.1]: https://github.com/nrzz/everyhook/releases/tag/v1.5.1
 [1.5.0]: https://github.com/nrzz/everyhook/releases/tag/v1.5.0
 [1.4.0]: https://github.com/nrzz/everyhook/releases/tag/v1.4.0
@@ -56,4 +61,4 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 [1.1.0]: https://github.com/nrzz/everyhook/releases/tag/v1.1.0
 [1.0.0]: https://github.com/nrzz/everyhook/releases/tag/v1.0.0
 
-[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.5.2...HEAD
