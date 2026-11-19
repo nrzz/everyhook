@@ -4,6 +4,12 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-19
+
+- `install --scope project` for Codex CLI now says that Codex loads a project's hooks only in a trusted project, and how to trust it: trust the folder when Codex asks, run `codex exec --trust` once in it (0.169.0 or later), or add `[projects.'<folder>'] trust_level = "trusted"` to `config.toml` in `CODEX_HOME`. The README, the conformance note and the "What still needs you" section say the same.
+- Following Codex CLI 0.169.0 (openai/codex #60041, "Require explicit project trust in non-interactive runs"). Bisected with side-by-side installs: on 0.168.0 `codex exec --dangerously-bypass-hook-trust` runs the hooks of `.codex/hooks.json` in an untrusted project; on 0.169.0 and 0.170.0 it does not, and prints `Untrusted project-local configuration is disabled. Run codex exec --trust ...`. A trust entry in `config.toml`, or `codex exec --trust` (which writes it; it does not exist before 0.169.0), makes the project's hooks run again on 0.168.0, 0.169.0 and 0.170.0 (`--trust` only on the last two). A hook in the user's own `hooks.json` needs no project trust.
+- Tests: the real-binary check of `--scope project` for Codex trusts the project with that entry (it had been red in `e2e.yml` since 16 November), and a new check puts an untrusted project and `--trust` to Codex 0.169.0 and later. 318 tests.
+
 ## [1.5.0] - 2026-10-28
 
 - `list --ours`: only the entries everyhook wrote across the agents, leaving out files whose hooks are all non-everyhook. It combines with `--agent`, `--event`, `--hook`, `--problems` and `--project`; problems are counted on the entries shown, no match is a successful empty report, and `--json` adds `ours: true`. An argument with a value, or `--ours` twice, is a usage error.
@@ -42,6 +48,7 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 - What the agents do is what the real binaries did: 52 raw hook outputs, the adapter at every event, project scope, and the case where everyhook itself is gone. They ran on Windows 11 and, on every push, on GitHub's Windows, macOS and Linux runners (`e2e.yml`). Cursor was not run.
 - Zero tokens for the tool. A hook costs nothing unless it returns a `reason` or a `context`; the longest reason of the examples is 140 characters.
 
+[1.5.1]: https://github.com/nrzz/everyhook/releases/tag/v1.5.1
 [1.5.0]: https://github.com/nrzz/everyhook/releases/tag/v1.5.0
 [1.4.0]: https://github.com/nrzz/everyhook/releases/tag/v1.4.0
 [1.3.0]: https://github.com/nrzz/everyhook/releases/tag/v1.3.0
@@ -49,4 +56,4 @@ All notable changes to everyhook are written here. The format follows [Keep a Ch
 [1.1.0]: https://github.com/nrzz/everyhook/releases/tag/v1.1.0
 [1.0.0]: https://github.com/nrzz/everyhook/releases/tag/v1.0.0
 
-[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/nrzz/everyhook/compare/v1.5.1...HEAD

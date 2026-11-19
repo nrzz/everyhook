@@ -13,11 +13,11 @@ export function prepare(agent, sb, api) {
 }
 
 /** Runs the agent. `permissions` is for Claude Code (its flags), `trust` for Codex (--dangerously-bypass-hook-trust). */
-export function go(agent, sb, api, { env = {}, prompt, timeout = 240000, permissions, trust = true } = {}) {
+export function go(agent, sb, api, { env = {}, prompt, timeout = 240000, permissions, trust = true, args } = {}) {
   const mod = TESTED[agent];
   const base = { env, timeout, ...(prompt ? { prompt } : {}) };
   if (agent === "claude-code") return mod.run(sb, api, { ...base, ...(permissions ? { args: permissions } : {}) });
-  if (agent === "codex") return mod.run(sb, { ...base, trust });
+  if (agent === "codex") return mod.run(sb, { ...base, trust, ...(args ? { args } : {}) });
   return mod.run(sb, api, base);
 }
 

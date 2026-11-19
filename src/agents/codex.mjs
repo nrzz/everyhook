@@ -1,5 +1,6 @@
 // Codex CLI (https://learn.chatgpt.com/docs/hooks.md). Hooks live in hooks.json or in [hooks] tables of config.toml, in CODEX_HOME and in
 // <project>/.codex/; Codex runs a hook only after the person trusted its hash (/hooks), or for one run with --dangerously-bypass-hook-trust.
+// Since 0.169.0 it also loads the hooks of <project>/.codex/ only when the project is trusted ([projects.'<folder>'] trust_level = "trusted" in config.toml).
 // On Windows Codex runs a hook command through `powershell.exe -NoProfile -Command`, which turns every non-zero exit code into 1: only JSON
 // on stdout can block there. Verified on 0.163.0 (see fixtures/codex/ and fixtures/conformance/codex.json).
 import { isObject, kindOf, makeTool, patchFiles, str } from "./common.mjs";

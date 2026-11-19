@@ -63,7 +63,7 @@ npm install -g github:nrzz/everyhook
 everyhook install examples/block-force-push.mjs --all
 ```
 
-`--all` is every agent. `--agent claude-code,codex` is two. Then start a new session of the agent. Codex CLI also wants you to trust the hook once (`/hooks`), see [What still needs you](#what-still-needs-you).
+`--all` is every agent. `--agent claude-code,codex` is two. Then start a new session of the agent. Codex CLI also wants you to trust the hook once (`/hooks`), and, for `--scope project`, to trust the folder; see [What still needs you](#what-still-needs-you).
 
 ## Use
 
@@ -263,7 +263,7 @@ Still to do:
 
 #### What still needs you
 
-- **Codex CLI** runs a hook only after you trust its definition (`/hooks` in Codex), or for one run with `--dangerously-bypass-hook-trust`. A hook that is not trusted is skipped, and `codex exec` says nothing about it (seen: the force push ran, and no event of the run mentioned hooks).
+- **Codex CLI** runs a hook only after you trust its definition (`/hooks` in Codex), or for one run with `--dangerously-bypass-hook-trust`. A hook that is not trusted is skipped, and `codex exec` says nothing about it (seen: the force push ran, and no event of the run mentioned hooks). A **project's** hooks (`install --scope project`, `.codex/hooks.json`) need one thing more since Codex 0.169.0: the project must be trusted. In a folder that is not, `codex exec` keeps the project's configuration and hooks off, even with `--dangerously-bypass-hook-trust`, and prints `warning: Untrusted project-local configuration is disabled`. Trust the folder when the terminal UI asks, run `codex exec --trust` once in it (0.169.0 or later; it saves the trust and loads the project at once), or add the entry yourself, which works with every version: `[projects.'/path/to/project'] trust_level = "trusted"` in `config.toml` in `CODEX_HOME` (`~/.codex`; on Windows the path lower-cased). Before 0.169.0 a project's hooks needed only the hook trust (seen on 0.168.0). A hook in the user's own `hooks.json` needs no project trust (seen on 0.170.0).
 - **Gemini CLI** fingerprints project hooks: it asks before it runs one it has not seen, and again when the entry changes (`docs`). A user-level hook needs nothing (seen).
 - **Copilot CLI** loads project hooks only in a trusted folder (`docs`). It runs the hooks of an event in order and stops at the first deny (seen: a logging hook installed after `block-force-push` never saw the blocked call; installed before it, it did).
 - **Cursor** watches its `hooks.json` and reloads it (documented).
@@ -480,7 +480,7 @@ What this README says an agent does is what the agent's real binary did, unless 
 | Agent | Version | Raw outputs put to it | Documents recorded from it | Also put to it |
 | --- | --- | --- | --- | --- |
 | Claude Code | 2.1.302 | 13 | 13 | `allow` in the default permission mode |
-| Codex CLI | 0.163.0 | 13 | 12 | a hook that is not trusted |
+| Codex CLI | 0.163.0 | 13 | 12 | a hook that is not trusted, a project that is not trusted (0.169.0 and later) |
 | Gemini CLI | 0.64.0 | 14 | 14 | a short environment under `GITHUB_SHA`, a `hooks` entry that is not an array |
 | Copilot CLI | 1.0.98 | 12 | 14 | a hook file with `"version": 2` |
 | Cursor | not run | none | 11 written from the reference | nothing |
@@ -535,7 +535,7 @@ For each binary: `install` put `examples/block-force-push.mjs` and `examples/log
 | context returned at post-tool | yes | yes | yes | yes |
 | a prompt that a hook refused | never sent | never sent | never sent | sent anyway |
 
-`install --scope project` wrote the file of the project (`.claude/settings.json`, `.codex/hooks.json`, `.gemini/settings.json`, `.github/hooks/everyhook.json`), wrote nothing to the home folder, and each agent ran the hook from it, before and after the call (Codex CLI with `--dangerously-bypass-hook-trust`, Gemini CLI in a folder it was told to trust).
+`install --scope project` wrote the file of the project (`.claude/settings.json`, `.codex/hooks.json`, `.gemini/settings.json`, `.github/hooks/everyhook.json`), wrote nothing to the home folder, and each agent ran the hook from it, before and after the call (Codex CLI with `--dangerously-bypass-hook-trust` in a folder trusted by an entry in its `config.toml`, which Codex 0.169.0 and later need and 0.168.0 did not; Gemini CLI in a folder it was told to trust).
 
 `--matcher`, in each agent's own syntax (`Bash`, `Bash`, `run_shell_command`, `bash|powershell`), limited the hook to the shell tool: the file write that followed ran, and the hook never saw it. `protect-env-files` blocked a write and an edit of a protected path through each agent's own write and edit tools, with the reason in front of the model, and left another file alone that it wrote and another that it edited (on Gemini CLI the protected files were the ones listed in `EVERYHOOK_PROTECT`, because Gemini CLI refuses to write a `.env*` file by itself, before any hook).
 
@@ -556,14 +556,14 @@ Two problems that `list` reports were put to the binaries that have them. Gemini
 
 ### The tests and CI
 
-**317 automated tests** (`npm test`; that is what `node --test` reports, less each of the 15 helper files that it lists as a test and that does nothing without its variable). 49 of them put the code to the real binaries and are skipped unless `E2E_CLAUDE`, `E2E_CODEX`, `E2E_GEMINI` and `E2E_COPILOT` name them; the others need nothing but Node, and a few skip themselves where a system lacks something (the right to make symlinks, on Windows). They cover every module, the editing of JSON by text with a fuzz round trip of 400 cases, ten layouts that `uninstall` must give back to the byte, and the 180 cases of the translation table (5 agents, 6 events, 6 answers).
+**318 automated tests** (`npm test`; that is what `node --test` reports, less each of the 15 helper files that it lists as a test and that does nothing without its variable). 50 of them put the code to the real binaries and are skipped unless `E2E_CLAUDE`, `E2E_CODEX`, `E2E_GEMINI` and `E2E_COPILOT` name them; the others need nothing but Node, and a few skip themselves where a system lacks something (the right to make symlinks, on Windows). They cover every module, the editing of JSON by text with a fuzz round trip of 400 cases, ten layouts that `uninstall` must give back to the byte, and the 180 cases of the translation table (5 agents, 6 events, 6 answers).
 
 `test.yml` runs the suite on Windows, macOS and Linux with Node 20, 22 and 24, and on Linux with Node 18. `e2e.yml` installs the four agents from npm on each of the three systems and runs the real-binary checks; it runs on every push and every week, so that a new version of an agent that changes any cell above fails there first. An agent that cannot be installed skips its checks with the reason and does not fail the run.
 
 ## Not verified
 
 - **Cursor, all of it.** No Cursor binary was run: its CLI needs a login, which this work did not use. Every Cursor statement is `docs`, its 11 fixtures are written from the reference, and `bench` and `explain` say so. The reference does not show the keys of Cursor's Write tool at `preToolUse`, so there is no fixture for it.
-- **Anything that needs a person.** Codex CLI's trust screen (`/hooks`), Gemini CLI's question about a changed project hook and Copilot CLI's question about a folder it does not trust were not driven. The checks ran `codex exec` untrusted (the hook does not run) and with `--dangerously-bypass-hook-trust`. An `ask` that a person answers was not seen either: every run was headless, where Claude Code and Copilot CLI deny it with the reason.
+- **Anything that needs a person.** Codex CLI's trust screen (`/hooks`), Gemini CLI's question about a changed project hook and Copilot CLI's question about a folder it does not trust were not driven. The checks ran `codex exec` untrusted (the hook does not run), with `--dangerously-bypass-hook-trust`, and in a project trusted by an entry in `config.toml` or by `codex exec --trust` (0.169.0 and later; a person trusting the folder in the terminal UI was not driven). An `ask` that a person answers was not seen either: every run was headless, where Claude Code and Copilot CLI deny it with the reason.
 - **Hooks from places `install` does not write.** Copilot CLI policy and plugin hooks, and the managed and enterprise files of every agent. `list` reads the managed files and the tests put it to made-up ones; no agent was run with any of them.
 - **Hook types other than `command`.** Claude Code documents `http`, `mcp_tool`, `prompt` and `agent` hooks too. everyhook installs and lists `command` hooks.
 - **Events outside the six** (`PermissionRequest`, `Notification`, `SubagentStop`, `PreCompact` and the rest), and the failure events (see [ROADMAP.md](ROADMAP.md)).

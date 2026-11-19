@@ -1,6 +1,7 @@
 // Codex CLI against a fake Responses API (the recipe of 17 October 2026): CODEX_HOME in a temporary folder, a config.toml that points a
 // model provider at 127.0.0.1, `codex exec --json`. E2E_CODEX names the binary. A script of steps says what the "model" does, one tool
 // call per turn: { shell }, { write: { path, content } }, { edit: { path, old, new } }, { text }.
+import fs from "node:fs";
 import path from "node:path";
 import { world } from "./helpers.mjs";
 import { binInfo, fakeServer, launch, put, resolveBin, scrubbedEnv, sse, textOf } from "./sandbox.mjs";
@@ -103,4 +104,21 @@ export async function run(w, { prompt = "hello", args = [], env = {}, trust = tr
   const events = [];
   for (const line of r.out.split(/\r?\n/)) { try { events.push(JSON.parse(line)); } catch { /* not an event */ } }
   return { ...r, events };
+}
+
+/**
+ * Trusts the project folder the way a person does (an entry in the user's config.toml): `[projects.'<folder>'] trust_level = "trusted"`, on Windows the folder
+ * lower-cased. Since Codex 0.169.0 (openai/codex #60041) `codex exec` keeps the configuration and hooks of a project that is not trusted off, even with
+ * --dangerously-bypass-hook-trust; the entry works with every version, `codex exec --trust` (which writes it) only from 0.169.0.
+ */
+export function trustProject(w) {
+  let dir = fs.realpathSync.native(w.work);
+  if (process.platform === "win32") dir = dir.toLowerCase();
+  fs.appendFileSync(w.configToml, `\n[projects.'${dir}']\ntrust_level = "trusted"\n`);
+}
+
+/** True when the binary is Codex 0.169.0 or newer (it knows --trust and keeps an untrusted project off). */
+export function trustsProjects() {
+  const [a, b] = info().number.split(".").map(Number);
+  return a > 0 || b >= 169;
 }

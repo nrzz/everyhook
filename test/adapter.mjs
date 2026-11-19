@@ -60,13 +60,13 @@ export const uninstall = (s, hook) => everyhook(s.sb, s.bin, ["uninstall", s.hoo
  * `before(api)` runs after the agent is prepared for the fake API and before it starts: that is where the hooks are installed (installing first
  * would be undone by the sign-in settings that Gemini CLI needs).
  */
-export async function session(s, steps, { env = {}, prompt, permissions, trust, before } = {}) {
+export async function session(s, steps, { env = {}, prompt, permissions, trust, args, before } = {}) {
   const api = await s.mod.fake(steps);
   let r;
   try {
     prepare(s.agent, s.sb, api);
     if (before) await before(api);
-    r = await go(s.agent, s.sb, api, { env: { EH_LOG: s.log, EVERYHOOK_LOG: s.everyhookLog, ...env }, prompt, permissions, trust });
+    r = await go(s.agent, s.sb, api, { env: { EH_LOG: s.log, EVERYHOOK_LOG: s.everyhookLog, ...env }, prompt, permissions, trust, args });
   } finally { await api.close(); }
   return { r, api, results: api.results(), requests: api.requests, log: readLog(s.log), everyhookLog: readLog(s.everyhookLog) };
 }

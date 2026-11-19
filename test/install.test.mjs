@@ -215,6 +215,7 @@ test("project scope writes the project's files, and says the entries hold paths 
   assert.match(r.out, /project scope/);
   assert.match(r.out, /gemini-cli: Gemini CLI fingerprints project hooks/);
   assert.match(r.out, /copilot-cli: Copilot CLI loads project hooks only in a trusted folder/);
+  assert.match(r.out, /codex: Codex loads the hooks of a project only in a trusted project .*0\.169\.0.*codex exec --trust.*trust_level = "trusted"/);
   assert.match(r.out, /The entries hold absolute paths of this machine/);
 });
 

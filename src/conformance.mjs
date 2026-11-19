@@ -16,7 +16,7 @@ export const ROWS = [
     title: "The files install writes (seen: the agent ran the hook from them)",
     cells: {
       "claude-code": cell("~/.claude/settings.json (or CLAUDE_CONFIG_DIR) and <project>/.claude/settings.json, key hooks. Events hold matcher groups that hold handlers.", "binary", { case: "install.user" }),
-      codex: cell("hooks.json in CODEX_HOME (~/.codex) and in <project>/.codex/. A hook runs only after the person trusted its hash (/hooks), or for one run with --dangerously-bypass-hook-trust.", "binary", { case: "install.user" }),
+      codex: cell("hooks.json in CODEX_HOME (~/.codex) and in <project>/.codex/. A hook runs only after the person trusted its hash (/hooks), or for one run with --dangerously-bypass-hook-trust; the hooks of a project also need the project to be trusted (since 0.169.0).", "binary", { case: "install.user" }),
       "gemini-cli": cell("~/.gemini/settings.json (GEMINI_CLI_HOME replaces ~) and <project>/.gemini/settings.json, key hooks: an object with event names only, each an array.", "binary", { case: "install.user" }),
       "copilot-cli": cell("JSON files in <COPILOT_HOME>/hooks/ (~/.copilot/hooks/) and <project>/.github/hooks/: { \"version\": 1, \"hooks\": { event: [handler] } }.", "binary", { case: "install.user" }),
       cursor: cell("~/.cursor/hooks.json and <project>/.cursor/hooks.json: { \"version\": 1, \"hooks\": { event: [{ command }] } }.", "docs"),

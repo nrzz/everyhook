@@ -115,7 +115,8 @@ for (const agent of AGENTS) {
 
   test(`${agent}: install --scope project writes the file of the project, and the agent runs the hook from it`, { skip, timeout: T }, async () => {
     const s = setup(agent, "project", ["log"]);
-    const o = await session(s, [{ shell: "echo PROJ-ONE" }], { before: () => install(s, "log", ["--scope", "project", "--event", "pre-tool,post-tool"]) });
+    // Codex (0.169.0 and later) loads the hooks of a project only in a folder the person trusted: the entry in config.toml is what trusting it writes
+    const o = await session(s, [{ shell: "echo PROJ-ONE" }], { before: async () => { await install(s, "log", ["--scope", "project", "--event", "pre-tool,post-tool"]); if (agent === "codex") TESTED.codex.trustProject(s.sb); } });
     assert.equal(o.r.code, 0, `${agent}: ${o.r.err.slice(0, 300)}`);
     const projectFile = path.join(s.sb.work, PROJECT_FILE[agent]);
     assert.ok(fs.existsSync(projectFile), `${PROJECT_FILE[agent]} is in the project`);
@@ -191,6 +192,24 @@ test("codex: a hook that is not trusted does not run, and `codex exec` says noth
   assert.ok(!o.results[0].text.includes("Force-pushing"), "so the force push was not blocked: it ran (and git, in a folder that is not a repository, said so)");
   assert.match(o.results[0].text, /not a git repository/);
   assert.ok(!o.r.events.some((e) => /hook/i.test(JSON.stringify(e))), "no event of the run mentions hooks");
+});
+
+// Codex 0.169.0 (openai/codex #60041): `codex exec` keeps the hooks of a project that is not trusted off, even with --dangerously-bypass-hook-trust, and says so;
+// `codex exec --trust` saves the trust in the user's config.toml and loads the project at once. Before 0.169.0 there is no such rule and no --trust.
+test("codex: the hooks of a project run only in a trusted folder: untrusted they do not (and codex exec says so), with --trust they do", { skip: TESTED.codex.skip() || (!TESTED.codex.trustsProjects() && "Codex before 0.169.0 does not keep an untrusted project off"), timeout: T }, async () => {
+  const run = async (label, args) => {
+    const s = setup("codex", label, ["log"]);
+    const o = await session(s, [{ shell: "echo TRUST-ONE" }], { args, before: () => install(s, "log", ["--scope", "project", "--event", "pre-tool,post-tool"]) });
+    assert.equal(o.r.code, 0, o.r.err.slice(0, 300));
+    assert.ok(o.results[0].text.includes("TRUST-ONE"), "the call ran");
+    return { s, o };
+  };
+  const untrusted = await run("untrusted", []);
+  assert.equal(untrusted.o.everyhookLog.length, 0, "the hook of the project did not run in a folder that is not trusted, although the run bypasses the hook trust");
+  assert.match(untrusted.o.r.err, /Untrusted project-local configuration is disabled. Run `codex exec --trust`/);
+  const trusted = await run("trusted", ["--trust"]);
+  assert.deepEqual(trusted.o.everyhookLog.map((d) => d.event), ["pre-tool", "post-tool"], "with --trust the hook of the project ran before and after the call");
+  assert.match(fs.readFileSync(trusted.s.sb.configToml, "utf8"), /\[projects\.'.+'\]\s+trust_level = "trusted"/, "and the trust was saved in config.toml");
 });
 
 // Seen in the first run of e2e.yml: on GitHub's runners Gemini CLI starts hooks with a short list of environment variables (it does so when
