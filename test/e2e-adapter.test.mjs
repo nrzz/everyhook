@@ -195,7 +195,7 @@ test("codex: a hook that is not trusted does not run, and `codex exec` says noth
 });
 
 // Codex 0.169.0 (openai/codex #60041): `codex exec` keeps the hooks of a project that is not trusted off, even with --dangerously-bypass-hook-trust, and says so;
-// `codex exec --trust` saves the trust in the user's config.toml and loads the project at once. Before 0.169.0 there is no such rule and no --trust.
+// `codex exec --trust` saves the trust in the user's config.toml and loads the project at once. Before 0.169.0 a danger-full-access run (the config.toml of this harness) trusted the folder by itself, and there is no --trust.
 test("codex: the hooks of a project run only in a trusted folder: untrusted they do not (and codex exec says so), with --trust they do", { skip: TESTED.codex.skip() || (!TESTED.codex.trustsProjects() && "Codex before 0.169.0 does not keep an untrusted project off"), timeout: T }, async () => {
   const run = async (label, args) => {
     const s = setup("codex", label, ["log"]);

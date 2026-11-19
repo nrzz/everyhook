@@ -40,7 +40,7 @@ export function canDo(mod, event) {
 function needsFor(agent, scope) {
   const out = [];
   if (agent === "codex") out.push("Codex runs a hook only after you trust it: open /hooks in Codex and trust the everyhook entries (for one run, codex exec --dangerously-bypass-hook-trust).");
-  if (agent === "codex" && scope === "project") out.push("Codex loads the hooks of a project only in a trusted project (since 0.169.0 `codex exec` keeps an untrusted project's hooks off, even with --dangerously-bypass-hook-trust): trust the folder when Codex asks, run `codex exec --trust` once in it (0.169.0 or later), or add [projects.'<folder>'] with trust_level = \"trusted\" to config.toml in CODEX_HOME (~/.codex).");
+  if (agent === "codex" && scope === "project") out.push("Codex loads the hooks of a project only in a trusted project (before 0.169.0 a danger-full-access `codex exec` run trusted the folder itself; since then none does, and an untrusted project's hooks stay off, even with --dangerously-bypass-hook-trust): trust the folder when Codex asks, run `codex exec --trust` once in it (0.169.0 or later), or add [projects.'<folder>'] with trust_level = \"trusted\" to config.toml in CODEX_HOME (~/.codex).");
   if (agent === "gemini-cli" && scope === "project") out.push("Gemini CLI fingerprints project hooks: it asks before it runs a hook it has not seen, and again when the entry changes.");
   if (agent === "copilot-cli" && scope === "project") out.push("Copilot CLI loads project hooks only in a trusted folder.");
   if (agent === "claude-code") out.push("Claude Code reads its settings when a session starts: start a new session.");

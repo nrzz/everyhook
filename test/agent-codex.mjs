@@ -109,7 +109,7 @@ export async function run(w, { prompt = "hello", args = [], env = {}, trust = tr
 /**
  * Trusts the project folder the way a person does (an entry in the user's config.toml): `[projects.'<folder>'] trust_level = "trusted"`, on Windows the folder
  * lower-cased. Since Codex 0.169.0 (openai/codex #60041) `codex exec` keeps the configuration and hooks of a project that is not trusted off, even with
- * --dangerously-bypass-hook-trust; the entry works with every version, `codex exec --trust` (which writes it) only from 0.169.0.
+ * --dangerously-bypass-hook-trust (before, a danger-full-access run, as this harness's config.toml sets, wrote the entry itself); the entry works with every version, `codex exec --trust` (which writes it) only from 0.169.0.
  */
 export function trustProject(w) {
   let dir = fs.realpathSync.native(w.work);
