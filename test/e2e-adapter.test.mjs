@@ -209,7 +209,7 @@ test("codex: the hooks of a project run only in a trusted folder: untrusted they
   assert.match(untrusted.o.r.err, /Untrusted project-local configuration is disabled. Run `codex exec --trust`/);
   const trusted = await run("trusted", ["--trust"]);
   assert.deepEqual(trusted.o.everyhookLog.map((d) => d.event), ["pre-tool", "post-tool"], "with --trust the hook of the project ran before and after the call");
-  assert.match(fs.readFileSync(trusted.s.sb.configToml, "utf8"), /\[projects\.'.+'\]\s+trust_level = "trusted"/, "and the trust was saved in config.toml");
+  assert.match(fs.readFileSync(trusted.s.sb.configToml, "utf8"), /\[projects\.['"].+['"]\]\s+trust_level = "trusted"/, "and the trust was saved in config.toml");
 });
 
 // Seen in the first run of e2e.yml: on GitHub's runners Gemini CLI starts hooks with a short list of environment variables (it does so when
